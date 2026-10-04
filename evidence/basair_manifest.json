@@ -1,0 +1,21 @@
+{
+  "document_id": "basair-haitham-talaat-ar",
+  "work_id": "basair-haitham-talaat",
+  "source_title": "بصائر",
+  "author": "د. هيثم طلعت",
+  "source_pdf_pages": 908,
+  "question_units": 237,
+  "numbering": "1-238 مع غياب رقم 3 في المصدر نفسه",
+  "missing_question_numbers_as_in_source": [
+    3
+  ],
+  "chunks": 968,
+  "knowledge_scope": "المقدمة 20-23، المسائل 25-905، الخاتمة 906-908",
+  "chunking_strategy": "المسألة وحدة معرفية؛ اكتشاف متسلسل لبدايات المسائل من متن الكتاب وفصلها حتى داخل الصفحة نفسها.",
+  "text_policy": "لا تلخيص ولا إعادة صياغة.",
+  "special_case_q197": "العنوان غير ظاهر في طبقة النص؛ ثبتت البداية من الفهرس/بداية الفصل ص659.",
+  "quran_policy": "لا تخمين لمحارف الآيات ذات الخط الخاص.",
+  "special_glyph_pages_count": 781,
+  "rag_ready": true,
+  "sha256": "7cf657af752512473e7201dc8204dac5d137a226c709e913961e70d53600249f"
+}

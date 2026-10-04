@@ -1,0 +1,11 @@
+// Bayyinah | Evaluate Retrieval Sufficiency
+const input = $input.first().json;
+const points = Array.isArray(input.result?.points) ? input.result.points : [];
+if (!points.length) return [{json:{sufficient:false,status:"INSUFFICIENT",reason:"لم يتم العثور على أي مادة في قاعدة المعرفة.",best_score:0,retrieved_count:0,usable_count:0,evidence:[]}}];
+const sortedPoints=[...points].sort((a,b)=>Number(b.score||0)-Number(a.score||0));
+const MIN_USABLE_SCORE=0.35;
+const topResults=sortedPoints.filter(p=>Number(p.score||0)>=MIN_USABLE_SCORE).slice(0,5);
+const bestScore=Number(sortedPoints[0]?.score||0);
+if(!topResults.length) return [{json:{sufficient:false,status:"INSUFFICIENT",reason:"نتائج الاسترجاع ضعيفة جدًا ولا توجد مادة مناسبة لإرسالها للتقييم الدلالي.",best_score:bestScore,retrieved_count:points.length,usable_count:0,evidence:[]}}];
+const evidence=topResults.map(point=>{ const p=point.payload||{}; const printedPages=Array.isArray(p.printed_pages)?p.printed_pages:[]; const pdfPages=Array.isArray(p.pdf_pages)?p.pdf_pages:[]; return {score:Number(point.score||0),content:p.content||"",source_type:p.source_type||"book",source_title:p.source_title||p.book_title||p.source_name||"",book_title:p.book_title||p.source_title||p.source_name||"",source_name:p.source_name||p.source_title||p.book_title||"",document_id:p.document_id||"",issue_number:p.issue_number??null,issue_title:p.issue_title||"",section_title:p.section_title||p.issue_title||"",printed_pages:printedPages,pdf_pages:pdfPages,page_start:p.page_start??(printedPages.length?printedPages[0]:(pdfPages.length?pdfPages[0]:null)),page_end:p.page_end??(printedPages.length?printedPages[printedPages.length-1]:(pdfPages.length?pdfPages[pdfPages.length-1]:null)),chunk_id:p.chunk_id||"",chunk_index:p.chunk_index??null,parent_id:p.parent_id||"",docling_refs:Array.isArray(p.docling_refs)?p.docling_refs:[],language:p.language||"ar",dataset:p.dataset||"",processing_version:p.processing_version||"",rag_ready:p.rag_ready??null}; });
+return [{json:{sufficient:true,status:"READY_FOR_SEMANTIC_EVALUATION",reason:"تم العثور على نتائج قابلة للفحص. يجب تقييم كفايتها دلاليًا بناءً على محتواها، وليس على درجة التشابه وحدها.",best_score:bestScore,retrieved_count:points.length,usable_count:topResults.length,evidence}}];
