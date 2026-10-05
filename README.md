@@ -2,7 +2,8 @@
 
 نظام ذكي لدعم الدعاة في البحث والتحقق والإجابة الموثقة.
 
-> **الحالة الحالية (2026-10-04):** آخر تشغيل كامل لإدخال كتاب «بصائر» فشل في `Jina Embedding - Documents` بسبب TPM: `101,278/100,000 tokens per minute` عند `item 2`، قبل Qdrant Upsert. آخر عدد متحقق منه في `bayyinah_jina_v1` قبل التشغيل كان `0` points. راجع `docs/CURRENT_STATUS.md` و`docs/PROBLEM_LOG.md`.
+> **الحالة الحالية (2026-10-04): VERIFIED END-TO-END ✅**  
+> اكتمل إدخال كتاب «بصائر» عبر Jina Embeddings إلى Qdrant، ثم نجح اختبار استرجاع فعلي من Telegram: عاد جواب عربي، وترجمة تغرينية، ومراجع من «بصائر» بالصفحتين 103 و110. راجع `docs/CURRENT_STATUS.md` و`evidence/rag_end_to_end_verification_2026-10-04.md`.
 
 ## الفكرة
 المشكلة ليست نقص نموذج لغوي؛ بل صعوبة وصول الداعية بسرعة إلى دليل قابل للتتبع ثم معرفة هل يكفي فعلًا للإجابة. بيّنة يبني مسارًا من: قاعدة معرفة خاصة → استرجاع → تقييم كفاية الدليل → مصادر خارجية معتمدة عند الحاجة → مراجعة بشرية → جواب عربي موثق → تحقق → ترجمة تغرينية → تحقق من الترجمة.
@@ -16,15 +17,32 @@
 ### Retrieval
 `Telegram → question routing → Jina embeddings-v3 (retrieval.query, 1024) → Qdrant query → preliminary score gate (0.35) → Evidence Judge → answer / approved external search / human review`
 
+## ما تم التحقق منه فعليًا
+- كتاب «بصائر» جُهّز إلى `968` chunk مرتبطة بالمصدر والصفحة.
+- مسار Jina document embeddings اكتمل في التشغيل الناجح.
+- `Prepare Qdrant Points` مرّر `968` نقطة.
+- `Build Qdrant Batches` أنشأ `97` دفعة Qdrant.
+- `Qdrant Upsert Points` اكتمل دون خطأ، ثم سُجّل الكتاب كـprocessed.
+- اختبار Telegram أعاد أدلة من «بصائر» ثم جوابًا عربيًا وترجمة تغرينية مع الصفحتين `103` و`110`.
+
+## ما زال يحتاج تحسينًا
+- جودة استخراج بعض ملفات PDF العربية المعقدة والخطوط القرآنية الخاصة ليست مشكلة محلولة بصورة عامة.
+- ترحيل الكتب القديمة من فضاء Cohere إلى Jina لم يكتمل.
+- عتبة الاسترجاع `0.35` ما زالت قيمة أولية وتحتاج Benchmark.
+- يلزم checkpoint/retry دائم حتى لا تُعاد تكلفة الـEmbedding عند فشل مرحلة لاحقة.
+- المرحلة التالية: Citation Verification، Query Rewrite/Retry، Benchmark، Groundedness/Abstention.
+
 ## مهم قبل استخدام هذا المستودع
 - لا يحتوي هذا المستودع على الكتب الكاملة أو بيانات الاعتماد.
 - ملف `workflow/bayyinah_baseline_SANITIZED.json` هو snapshot baseline من export سابق؛ **ليس تصديرًا مضمونًا لآخر live workflow بعد هجرة Jina**.
 - أحدث التعديلات موثقة في `workflow/node_snippets/` و`docs/ARCHITECTURE.md`.
-- بعد استقرار التشغيل يجب تصدير الـWorkflow الحي من n8n، تنظيفه من Credentials/IDs، واستبدال baseline snapshot.
+- بعد استقرار التحسينات يجب تصدير الـWorkflow الحي من n8n، تنظيفه من Credentials/IDs، واستبدال baseline snapshot.
 
 ## وثائق مهمة
 - `docs/CURRENT_STATUS.md`
 - `docs/PROBLEM_LOG.md`
+- `docs/CHANGELOG.md`
+- `docs/IMPROVEMENT_PLAN.md`
 - `docs/ARABIC_PDF_RAG.md`
 - `docs/MENTOR_QUESTIONS.md`
 - `docs/ARCHITECTURE.md`
@@ -32,8 +50,8 @@
 - `docs/SOURCE_RIGHTS.md`
 
 ## Dependencies / services
-- n8n 2.41.4 (current stable used during hardening)
-- Qdrant (collection uses named vector `dense`, dimension `1024`, Cosine)
+- n8n 2.41.4
+- Qdrant (`dense`, dimension `1024`, Cosine)
 - Jina AI Embeddings (`jina-embeddings-v3`)
 - OpenAI (LLM evaluation / generation / verification)
 - Tavily (approved-domain external search)

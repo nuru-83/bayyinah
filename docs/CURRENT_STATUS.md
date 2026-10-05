@@ -1,26 +1,35 @@
 # Current status | حالة التشغيل
 
-## Status: BLOCKED - JINA TPM RATE LIMIT
+## Status: VERIFIED END-TO-END ✅
 
-آخر تشغيل كامل لمسار إدخال كتاب «بصائر» **فشل قبل Qdrant Upsert** داخل عقدة:
+بتاريخ 2026-10-04 اكتمل مسار RAG الجديد الخاص بكتاب «بصائر» من الإدخال حتى الإجابة عبر Telegram.
 
-`Jina Embedding - Documents`
+## ما تم إثباته في التشغيل الناجح
+1. `Parse JSONL Chunks` مرّر `968` chunk.
+2. `Build Gemini Batches` (الاسم التاريخي للعقدة؛ وهي الآن تغذي Jina) أنشأ `39` دفعة.
+3. `Jina Embedding - Documents` اكتمل بنجاح بعد رفع Batch Interval إلى 15 ثانية.
+4. `Expand Jina Batch Embeddings` أعاد `968` عنصرًا.
+5. `Prepare Qdrant Points` جهّز `968` نقطة.
+6. `Build Qdrant Batches` أنشأ `97` دفعة.
+7. `Qdrant Upsert Points` اكتمل بنجاح.
+8. `Prepare Processed Books Log` و`Mark Knowledge File as Processed` اكتملتا بنجاح.
 
-### Exact error
+## اختبار الاسترجاع End-to-End
+تم إرسال سؤال تجريبي عبر Telegram حول التطور الصغير وعلاقته بالتطور الكبير. النظام:
+- نفّذ query embedding باستخدام Jina `retrieval.query`.
+- استرجع أدلة من Qdrant collection `bayyinah_jina_v1`.
+- مرّر الأدلة عبر Evidence Judge.
+- أنشأ جوابًا عربيًا.
+- ترجم الجواب إلى التغرينية.
+- أعاد مصدرين للتحقق من كتاب «بصائر»: الصفحة 103 والصفحة 110.
 
-```text
-The service is receiving too many requests from you [item 2]
-Token rate limit exceeded: 101,278/100,000 tokens per minute.
-Reduce batch sizes or upgrade your plan.
-```
+هذا الاختبار يثبت أن مسار:
 
-### What this means
-- هذا ليس فشلًا في Qdrant ولا في بنية الـRAG نفسها.
-- التشغيل توقف أثناء إنشاء document embeddings، قبل `Expand Jina Batch Embeddings` ثم `Prepare Qdrant Points` ثم `Qdrant Upsert Points`.
-- آخر عدد تم التحقق منه قبل هذا التشغيل داخل `bayyinah_jina_v1` كان `0` points.
-- نجح Jina Embedding سابقًا على 968 chunk في تشغيل منفصل، لكن هذا لا يساوي نجاح الإدخال end-to-end.
+`Telegram → Jina Query Embedding → Qdrant → Evidence Judge → Arabic Answer → Tigrinya Translation → Source/Page`
 
-### Current verified configuration
+يعمل فعليًا في النسخة الحالية.
+
+## التكوين الحالي المثبت
 - collection: `bayyinah_jina_v1`
 - named vector: `dense`
 - dimensions: `1024`
@@ -28,20 +37,27 @@ Reduce batch sizes or upgrade your plan.
 - document task: `retrieval.passage`
 - query task: `retrieval.query`
 - source book: «بصائر»
-- expected chunks: `968`
-- current batching before failure: 25 chunks per Jina request, HTTP batch interval 10 seconds
-- Qdrant Upsert URL was corrected to `bayyinah_jina_v1/points?wait=true` before this failed run.
+- chunks processed in successful ingestion: `968`
+- Qdrant upsert batches: `97`
+- Jina document Batch Interval that completed successfully: `15000ms`
 
-### Next recommended retry
-1. Change Jina HTTP Request `Batch Interval` from `10000ms` to `15000ms`.
-2. Wait at least 60-90 seconds so the previous rolling TPM window clears.
-3. Run the full ingestion workflow once.
-4. Verify `bayyinah_jina_v1` point count.
-5. Run a known question from «بصائر» and verify source/page payload.
+## ما لم يعد Blocker
+- Jina TPM لم يعد يمنع التشغيل الحالي بعد ضبط Batch Interval إلى 15 ثانية.
+- Qdrant Upsert لم يعد يشير إلى Gemini collection؛ أصبح يكتب إلى `bayyinah_jina_v1`.
+- `recommended_evidence_indexes` أصبح zero-based بصورة ثابتة.
 
-### Mark SUCCESS only if
-1. Qdrant `bayyinah_jina_v1` shows the expected point count (approximately/exactly 968 depending on final input).
-2. A known question from «بصائر» returns relevant chunks from that book.
-3. Payload preserves source/page metadata.
+## المشكلات المفتوحة غير المانعة للتشغيل
+1. PDF عربي معقد: جودة الاستخراج من الخطوط القرآنية الخاصة وRTL ليست محلولة بصورة عامة.
+2. الكتب القديمة في Cohere تحتاج migration/re-embedding إلى Jina.
+3. `MIN_USABLE_SCORE = 0.35` يحتاج Benchmark بدل الاعتماد على قيمة أولية.
+4. ingestion checkpoint/retry يحتاج تحسينًا حتى لا يعيد Embeddings عند فشل مرحلة لاحقة.
+5. baseline workflow العام في GitHub ليس أحدث export حي؛ يجب استبداله لاحقًا بنسخة Jina sanitized نهائية.
 
-Do not call ingestion successful merely because embeddings complete.
+## المرحلة التالية
+انتقل المشروع من «إصلاح RAG الأساسي» إلى «تحسين الجودة والقياس»:
+- Citation Verification
+- Query Rewriting / Retrieval Retry
+- Benchmark baseline
+- Groundedness / Abstention
+- Claim-level grounding / Evidence-gap recovery
+- Evidence ledger
