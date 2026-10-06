@@ -1,13 +1,12 @@
 # Security
 
-قبل جعل المستودع عامًا:
+قبل تشغيل القالب:
 
-- لا ترفع API keys أو OAuth secrets أو tokens.
-- لا ترفع `.env` حقيقيًا.
-- لا ترفع reviewer Telegram IDs أو بيانات مستخدمين.
-- لا ترفع Google Drive/Sheets identifiers الخاصة إذا لم تكن ضرورية للعامة.
-- استخدم n8n Credentials.
-- راجع أي Workflow export جديد قبل commit.
-- إذا ظهر مفتاح في screenshot أو Git history فدوّره؛ حذف الملف لاحقًا لا يعيد السرية.
-
-الـWorkflow المرفق هنا منقح للمراجعة، لكنه baseline قديم وليس export نهائيًا للـlive workflow بعد هجرة Jina.
+- لا تضع API Keys مباشرة داخل Workflow.
+- أنشئ Credentials داخل n8n لـ Telegram وOpenAI وJina وQdrant وGoogle.
+- لا ترفع Service Account JSON إلى GitHub.
+- استبدل `YOUR_QDRANT_HOST`.
+- استبدل `YOUR_APPROVED_SOURCES_SHEET_ID`.
+- استبدل `YOUR_REVIEWER_CHAT_ID`.
+- لا تستخدم بيانات محادثات حقيقية في المستودع العام.
+- احتفظ برسائل التصاريح والكتب الخاصة خارج GitHub العام.
